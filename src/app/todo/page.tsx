@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
-import { db } from "@/config/firebase";
+import { signOut } from "firebase/auth";
+import { db, auth } from "@/config/firebase";
+import { useRouter } from "next/navigation";
 
 interface Task {
     id: string;
@@ -12,6 +14,7 @@ interface Task {
 export default function TodoPage() {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [newTask, setNewTask] = useState("");
+    const router = useRouter();
 
     const fetchTasks = async () => {
     const querySnapshot = await getDocs(collection(db, "tasks"));
@@ -32,6 +35,16 @@ export default function TodoPage() {
     const deleteTask = async (id: string) => {
     await deleteDoc(doc(db, "tasks", id));
     fetchTasks();
+    };
+
+    const handleLogout = async () => {
+    try {
+        await signOut(auth);
+      router.push("/auth"); // ログインページにリダイレクト
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+        alert("ログアウトに失敗しました: " + error.message);
+    }
     };
 
     useEffect(() => {
@@ -69,6 +82,13 @@ export default function TodoPage() {
             </li>
         ))}
         </ul>
+        <button
+        onClick={handleLogout}
+        className="w-full bg-red-500 text-white p-2 rounded mt-4"
+        >
+        ログアウト
+        </button>
     </main>
     );
 }
+
