@@ -11,36 +11,42 @@ interface Task {
     text: string;
 }
 
+const weekdays = ["月", "火", "水", "木", "金", "土", "日"];
+
 export default function TodoPage() {
-    const [tasks, setTasks] = useState<Task[]>([]);
+    const [tasks, setTasks] = useState<{ [key: string]: Task[] }>({});
     const [newTask, setNewTask] = useState("");
+  const [selectedDay, setSelectedDay] = useState(weekdays[0]); // 初期は月曜日
     const router = useRouter();
 
     const fetchTasks = async () => {
-    const querySnapshot = await getDocs(collection(db, "tasks"));
-    const tasksData = querySnapshot.docs.map((doc) => ({
+    const data: { [key: string]: Task[] } = {};
+    for (const day of weekdays) {
+        const querySnapshot = await getDocs(collection(db, `tasks_${day}`));
+        data[day] = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         text: doc.data().text,
-    }));
-    setTasks(tasksData);
+        }));
+    }
+    setTasks(data);
     };
 
     const addTask = async () => {
     if (!newTask.trim()) return;
-    await addDoc(collection(db, "tasks"), { text: newTask });
+    await addDoc(collection(db, `tasks_${selectedDay}`), { text: newTask });
     setNewTask("");
     fetchTasks();
     };
 
     const deleteTask = async (id: string) => {
-    await deleteDoc(doc(db, "tasks", id));
+    await deleteDoc(doc(db, `tasks_${selectedDay}`, id));
     fetchTasks();
     };
 
     const handleLogout = async () => {
     try {
         await signOut(auth);
-      router.push("/auth"); // ログインページにリダイレクト
+        router.push("/auth");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         alert("ログアウトに失敗しました: " + error.message);
@@ -52,43 +58,66 @@ export default function TodoPage() {
     }, []);
 
     return (
-    <main className="p-4 max-w-md mx-auto">
-        <h1 className="text-2xl font-bold mb-4">Todo リスト</h1>
-        <div className="mb-4">
+    <main className="p-6 max-w-lg mx-auto bg-yellow-50 min-h-screen">
+        <h1 className="text-3xl font-bold text-center text-yellow-700 mb-4">📅 曜日ごとのTodoリスト</h1>
+
+      {/* 曜日選択タブ */}
+        <div className="flex space-x-2 overflow-x-auto mb-4">
+        {weekdays.map((day) => (
+            <button
+            key={day}
+            className={`px-4 py-2 rounded-full font-bold ${
+                selectedDay === day ? "bg-yellow-500 text-white" : "bg-gray-800"
+            }`}
+            onClick={() => setSelectedDay(day)}
+            >
+            {day}
+            </button>
+        ))}
+        </div>
+
+      {/* タスク入力 */}
+        <div className="mb-6">
         <input
             type="text"
-            placeholder="新しいタスクを追加"
+            placeholder="✍️ タスクを入力"
             value={newTask}
             onChange={(e) => setNewTask(e.target.value)}
-            className="w-full p-2 border rounded mb-2"
+            className="w-full p-3 border-2 border-yellow-400 rounded-xl outline-none focus:ring-2 focus:ring-yellow-500"
         />
         <button
             onClick={addTask}
-            className="w-full bg-green-500 text-white p-2 rounded"
+            className="w-full mt-2 bg-yellow-500 text-white font-bold p-3 rounded-xl hover:bg-yellow-600 transition-all"
         >
-            追加
+            + 追加
         </button>
         </div>
-        <ul>
-        {tasks.map((task) => (
-            <li key={task.id} className="flex justify-between items-center mb-2">
-            <span>{task.text}</span>
+
+      {/* タスク一覧 */}
+        <ul className="space-y-3">
+        {tasks[selectedDay]?.map((task) => (
+            <li key={task.id} className="flex justify-between items-center p-4 bg-white shadow-lg rounded-xl">
+            <span className="text-gray-700">{task.text}</span>
             <button
                 onClick={() => deleteTask(task.id)}
-                className="text-red-500 underline"
+                className="text-red-500 font-black hover:text-red-700 transition"
             >
-                削除
+                ✖
             </button>
             </li>
         ))}
         </ul>
+
+      {/* ログアウトボタン */}
         <button
         onClick={handleLogout}
-        className="w-full bg-red-500 text-white p-2 rounded mt-4"
+        className="w-full bg-red-400 text-white font-bold p-3 rounded-xl mt-6 hover:bg-red-500 transition-all"
         >
-        ログアウト
+        🚪 ログアウト
         </button>
     </main>
     );
 }
+
+
 

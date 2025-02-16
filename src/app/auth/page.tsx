@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/config/firebase";
+import { useRouter } from "next/navigation";
 
 export default function AuthPage() {
     const [email, setEmail] = useState("");
@@ -18,44 +18,47 @@ export default function AuthPage() {
         } else {
         await createUserWithEmailAndPassword(auth, email, password);
         }
-        router.push("/todo");
+      router.push("/todo"); // ログイン成功後、Todoページへ移動
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-        alert(error.message);
+        alert("エラー: " + error.message);
     }
     };
 
     return (
-    <main className="p-4 max-w-md mx-auto">
-        <h1 className="text-2xl font-bold mb-4">{isLogin ? "ログイン" : "新規登録"}</h1>
-        <div className="mb-4">
+    <main className="p-6 max-w-md mx-auto bg-yellow-50 min-h-screen flex flex-col justify-center items-center">
+        <h1 className="text-3xl font-bold text-yellow-700 mb-6">
+        {isLogin ? "🔐 ログイン" : "📝 新規登録"}
+        </h1>
+        <div className="w-full bg-white p-6 rounded-xl shadow-lg">
         <input
             type="email"
-            placeholder="メールアドレス"
+            placeholder="📧 メールアドレス"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border rounded mb-2"
+            className="w-full p-3 border-2 border-yellow-400 rounded-xl outline-none focus:ring-2 focus:ring-yellow-500 mb-3"
         />
         <input
             type="password"
-            placeholder="パスワード"
+            placeholder="🔑 パスワード"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-3 border-2 border-yellow-400 rounded-xl outline-none focus:ring-2 focus:ring-yellow-500 mb-4"
         />
+        <button
+            onClick={handleAuth}
+            className="w-full bg-yellow-500 text-white font-bold p-3 rounded-xl hover:bg-yellow-600 transition-all"
+        >
+            {isLogin ? "ログイン" : "登録"}
+        </button>
+        <p
+            className="text-center text-sm text-gray-600 mt-4 cursor-pointer hover:text-yellow-700"
+            onClick={() => setIsLogin(!isLogin)}
+        >
+            {isLogin ? "アカウントを持っていませんか？新規登録はこちら" : "既にアカウントをお持ちですか？ログインはこちら"}
+        </p>
         </div>
-        <button
-        onClick={handleAuth}
-        className="w-full bg-blue-500 text-white p-2 rounded mb-4"
-        >
-        {isLogin ? "ログイン" : "新規登録"}
-        </button>
-        <button
-        onClick={() => setIsLogin(!isLogin)}
-        className="w-full text-blue-500 underline"
-        >
-        {isLogin ? "新規登録はこちら" : "ログインはこちら"}
-        </button>
     </main>
     );
 }
+
